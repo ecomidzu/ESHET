@@ -9,7 +9,6 @@ def get_articles() -> list:
 def get_html(page: str):
     with open(page, 'r', encoding='utf-8') as f:
         return f.read()
-#Надо бы дописать сбор ключевых слов, рубрику грнти и описаний на других языках, их тоже можно разложить. Улучшить качество.
 
 def parse_data_total(html: str) -> dict:
     soup = BeautifulSoup(html, 'html.parser')
@@ -36,7 +35,8 @@ def parse_data_total(html: str) -> dict:
                 total['DOI'] = b.text.split()[1]
             if 'Тип:' in b.text or 'Язык:' in b.text or 'Год издания:' in b.text\
                     or 'УДК:' in b.text or 'Год:' in b.text \
-                    or 'Страницы:' in b.text or 'Номер:' in b.text:
+                    or 'Страницы:' in b.text or 'Номер:' in b.text or 'ISBN:' in b.text \
+                    or 'Поступила в редакцию:' in b.text:
                 for k in b.text.split('\n'):
                     if ':' in k:
                         total[k.split(':')[0]] = k.split(':')[1].strip()
@@ -68,6 +68,42 @@ def parse_data_total(html: str) -> dict:
             for bg in c:
                 text += '; '+bg.text
             total['Ключевые слова'] = text[2:]
+        if 'ОПИСАНИЕ НА' in str(table) and 'ЯЗЫКЕ:' in str(table):
+            c = table.select('tr')
+            tex=''
+            for y in c[1:]:
+                tex+='\n'+y.text
+            if c[0].text.strip().split()[0] == 'ОПИСАНИЕ':
+                total[c[0].text]=tex
+        if 'ИСТОЧНИК:' in str(table) or 'КОНФЕРЕНЦИЯ:' in str(table) or 'ЖУРНАЛ:' in str(table):
+            c = table.select('tr')
+            tex=''
+            for y in c[1:]:
+                tex+='\n'+y.text
+            if c[0].text.strip().split()[0] == 'ИСТОЧНИК:' or c[0].text.strip().split()[0] == 'КОНФЕРЕНЦИЯ:' \
+                    or c[0].text.strip().split()[0] == 'ЖУРНАЛ:':
+                total[c[0].text]=tex
+    a = 0
+    bd = set()
+    try:
+        authors = soup.select('b font')
+        for i in range(len(authors)):
+            total['author_'+str(i)] = authors[i].text
+    except:
+        pass
+    try:
+        affiliations = soup.select('div div sup')
+        for i in range(len(authors)):
+            total['author_affiliations_'+str(i)]=affiliations[i].text
+            bd = bd.union(set(affiliations[i].text.split(',')))
+    except:
+        pass
+    try:
+        affiliations = soup.select('td > .pointer font')
+        for i in range(len(bd)):
+            total['affiliation_'+str(i)]=affiliations[i].text
+    except:
+        pass
     total = dict(filter(lambda x:x[1], total.items()))
     for key in total.keys():
         total[key] = [total[key]]
@@ -88,7 +124,6 @@ def main():
     except Exception as e:
         print(e)
     new = new.set_index('ind')
-    print(new)
     d = pd.read_excel('result.xlsx')
     new = pd.concat([d, new],axis=1)
     new.to_excel('exper.xlsx', index=False)
