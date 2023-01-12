@@ -3,7 +3,7 @@ import pandas as pd
 from os import listdir
 from tqdm import tqdm
 
-def get_pages() -> list:
+def get_articles() -> list:
     return listdir('articles/')
 
 def get_html(page: str):
@@ -11,7 +11,7 @@ def get_html(page: str):
         return f.read()
 #Надо бы дописать сбор ключевых слов, рубрику грнти и описаний на других языках, их тоже можно разложить. Улучшить качество.
 
-def parse_data(html: str) -> dict:
+def parse_data_total(html: str) -> dict:
     soup = BeautifulSoup(html, 'html.parser')
     info = soup.select('#leftcol+ td > table > tbody > tr:nth-child(4) > td:nth-child(1)')
     a = info[0].select('tr')
@@ -76,12 +76,12 @@ def parse_data(html: str) -> dict:
 
 
 def main():
-    pages = get_pages()
+    pages = get_articles()
     new = pd.DataFrame()
     try:
         for page in tqdm(pages):
             html = get_html('articles/'+page)
-            result= parse_data(html)
+            result= parse_data_total(html)
             result['ind'] = int(page[8:-5])
             new1 = pd.DataFrame.from_dict(result)
             new = pd.concat([new, new1])

@@ -7,6 +7,7 @@ from selenium.webdriver.common.by import By
 import time
 import random
 import pandas as pd
+from tqdm import tqdm
 
 
 class WorkFlow:
@@ -39,7 +40,7 @@ class WorkFlow:
             a.send_keys(self.query)
             driver.execute_script("javascript:query_message()")
             time.sleep(1)
-            for i in range(self.pages):
+            for i in tqdm(range(self.pages)):
                 html = driver.page_source
                 with open('pages/' + str(i)+'.html', 'w', encoding='utf-8') as f:
                     f.write(html)
