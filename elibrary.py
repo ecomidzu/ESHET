@@ -5,7 +5,6 @@ from selenium.webdriver.support import expected_conditions as EC
 import selenium
 from selenium.webdriver.common.by import By
 import time
-import random
 import pandas as pd
 from tqdm import tqdm
 
